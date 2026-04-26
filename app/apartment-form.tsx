@@ -68,6 +68,8 @@ export function ApartmentForm(): ReactNode {
     initialAnalyzeState,
   );
   const [isListingFocused, setIsListingFocused] = useState(false);
+  /** Controlled so React’s post-action form reset does not clear the listing. */
+  const [listingText, setListingText] = useState("");
   const contentFieldId = useId();
 
   const hasAnalyzed = state.status === "success" || state.status === "error";
@@ -94,8 +96,12 @@ export function ApartmentForm(): ReactNode {
         <textarea
           id={contentFieldId}
           name="content"
+          value={listingText}
           rows={isListingExpanded ? 10 : 3}
           placeholder="Paste the full listing: address, price, description…"
+          onChange={(e) => {
+            setListingText(e.target.value);
+          }}
           onFocus={() => {
             setIsListingFocused(true);
           }}
