@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, type ReactNode } from "react";
+import { useActionState, useId, useState, type ReactNode } from "react";
 import { analyzeListing } from "./actions/analyze";
 import {
   initialAnalyzeState,
@@ -67,7 +67,11 @@ export function ApartmentForm(): ReactNode {
     analyzeListing,
     initialAnalyzeState,
   );
+  const [isListingFocused, setIsListingFocused] = useState(false);
   const contentFieldId = useId();
+
+  const hasAnalyzed = state.status === "success" || state.status === "error";
+  const isListingExpanded = !hasAnalyzed || isListingFocused || isPending;
 
   return (
     <div className="flex min-h-0 w-full max-w-2xl flex-1 flex-col">
@@ -80,8 +84,6 @@ export function ApartmentForm(): ReactNode {
         </p>
       </header>
 
-      <div className="min-h-8 flex-1" aria-hidden="true" />
-
       <form action={formAction} className="flex flex-col gap-3">
         <label
           htmlFor={contentFieldId}
@@ -92,9 +94,17 @@ export function ApartmentForm(): ReactNode {
         <textarea
           id={contentFieldId}
           name="content"
-          rows={10}
+          rows={isListingExpanded ? 10 : 3}
           placeholder="Paste the full listing: address, price, description…"
-          className="min-h-32 w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm leading-relaxed text-zinc-900 placeholder:text-zinc-400 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:outline-zinc-300"
+          onFocus={() => {
+            setIsListingFocused(true);
+          }}
+          onBlur={() => {
+            setIsListingFocused(false);
+          }}
+          className={`${
+            isListingExpanded ? "min-h-32" : "min-h-20"
+          } w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm leading-relaxed text-zinc-900 transition-[min-height] duration-200 ease-out placeholder:text-zinc-400 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:outline-zinc-300`}
         />
         <div className="flex justify-end">
           <button
