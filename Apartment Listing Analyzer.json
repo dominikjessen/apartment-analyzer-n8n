@@ -1,0 +1,108 @@
+{
+  "name": "Apartment Listing Analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this apartment listing and rank it based on the following criteria:\n\nDEAL-BREAKERS (any → score 1-3)\n- Asking price > €500,000\n- Ground floor\n- No outdoor space (balcony, terrace, or garden)\n- Energy label below C\n- Foundation issues; pre-1940 building without foundation documentation\n- VvE inactive, no reserves, or unfunded special assessments pending\n- Outside target neighborhoods (see below)\n\nNEIGHBORHOODS\nPreferred: De Pijp, Oost (Indische/Dapperbuurt), Oud-West, De Baarsjes,\nAcceptable: Westerpark edges, Watergraafsmeer near Linnaeus/Middenweg, Oostelijk Havengebied, Jordaan\nPass: IJburg, most of Noord, Bos en Lommer (far), Buitenveldert, anywhere needing tram to reach a nice café\n\nPosition: quiet side street within 1-3 blocks (~500m) of a café/shop spine.\nGood spines: Jan Evertsenstraat, Kinkerstraat, Overtoom, Eerste van Swindenstraat, Gerard Doustraat, Ceintuurbaan.\nBad: directly on a tourist/market spine, or 3+ blocks from any commercial street.\n\nWHAT MATTERS (in order)\n1. Location quality (neighborhood + street position)\n2. Light — south/west main room ideal, east okay, north is a near-deal-breaker.\n   Downgrade if buildings <5m across from main windows.\n3. Layout — 2-bed strongly preferred (small 2nd room okay, 7m²+).\n   Large 1-bed acceptable if office nook fits. Open kitchen/living preferred.\n   Avoid dark central kitchens and compartmentalized pre-war plans.\n4. Outdoor space — private roof terrace ideal, balcony good, ideally not north-facing and off the living room, but not dealbreaker.\n5. Building/energy — label A-C preferred, D downgrades, renovated old = sweet spot.\n6. Size — 60-70m² ideal, 50m² minimum if exceptional. Don't trade light for size.\n\nPRICING\nHard cap €500k. Sweet spot €425-485k to account for overbidding. Don't stretch.\n\nSCORING REFERENCE\n- 60m² 2-bed, De Pijp, great light, roof terrace, €485k → 10\n- 60m² 2-bed, De Baarsjes, great light, roof terrace, €465k → 9\n- 75m² 1-bed, Oud-West, mediocre light, €490k → 6-7\n- 65m² 2-bed, Watergraafsmeer, great light, €440k → 6 (location)\n- Perfect apartment at €540k → 1-3 (over cap)\n\nRULES\n- Be honest. Accurate 6 > optimistic 8.\n- If light direction, energy label, erfpacht, or VvE health is missing,\n  list as a question for the agent — don't assume.\n\nApartment Description: {{ $(\"Receive Apartment Description\").item.json.body.content }}\n\nProvide a detailed analysis with:\n1. Overall ranking score (1-10)\n2. Key strengths\n3. Key weaknesses\n4. Recommendation (buy, consider, or pass)\n5. Brief summary",
+        "options": {
+          "systemMessage": "You are a real estate expert specializing in Dutch apartment listings. Your role is to analyze apartment listings and provide objective, detailed rankings based on the provided description. Always provide structured analysis with scores, strengths, weaknesses, and clear recommendations."
+        }
+      },
+      "id": "60dc8a07-d561-49cb-8fed-ad431839fab1",
+      "name": "Analyze Apartment",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [464, 304]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "6bfe4e7c-119f-4d14-9867-bd9151572aa0",
+      "name": "OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [536, 528]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"analysis\": $json.output, \"description\": $(\"Receive Apartment Description\").item.json.body.description } }}",
+        "options": {}
+      },
+      "id": "922e6454-6ddd-4883-93af-e1b9fca9ee61",
+      "name": "Return Analysis",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [816, 304]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analyze-apartment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "88e0f07d-e648-47e5-9489-33ffc100187d",
+      "name": "Receive Apartment Description",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 304],
+      "webhookId": "dfbe4d1d-f5a3-4486-91c4-c71e9d9b62c7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Analyze Apartment": {
+      "main": [
+        [
+          {
+            "node": "Return Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analyze Apartment",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Apartment Description": {
+      "main": [
+        [
+          {
+            "node": "Analyze Apartment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3f74d654-ef04-4a55-a742-ae54a963ada3",
+  "meta": {
+    "instanceId": "f0f975fab350c5e6ff542aede07acd639fe195588206425c2cd5413ac4873fc6"
+  },
+  "id": "WUYpLi51F2YbHavZ",
+  "tags": []
+}
